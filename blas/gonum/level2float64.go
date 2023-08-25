@@ -23,7 +23,7 @@ func (Implementation) Dger(m, n int, alpha float64, x []float64, incX int, y []f
 	if n < 0 {
 		panic(nLT0)
 	}
-	if lda < max(1, n) {
+	if lda < max(1, m) {
 		panic(badLdA)
 	}
 	if incX == 0 {

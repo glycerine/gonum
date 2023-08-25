@@ -14,7 +14,7 @@ func (Implementation) Iladlc(m, n int, a []float64, lda int) int {
 		panic(mLT0)
 	case n < 0:
 		panic(nLT0)
-	case lda < max(1, n):
+	case lda < max(1, m):
 		panic(badLdA)
 	}
 

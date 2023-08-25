@@ -103,10 +103,6 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 		return
 	}
 
-	nw := n
-	if side == blas.Right {
-		nw = m
-	}
 	switch {
 	case store == lapack.ColumnWise && len(v) < (nv-1)*ldv+k:
 		panic(shortV)
@@ -116,7 +112,7 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 		panic(shortT)
 	case len(c) < (m-1)*ldc+n:
 		panic(shortC)
-	case len(work) < (nw-1)*ldwork+k:
+	case len(work) < ldwork*k:
 		panic(shortWork)
 	}
 
@@ -140,7 +136,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 
 				// W = C1.
 				for j := 0; j < k; j++ {
-					bi.Dcopy(n, c[j*ldc:], 1, work[j:], ldwork)
+					//bi.Dcopy(n, c[j*ldc:], 1, work[j:], ldwork)
+					// CALL dcopy( n, c( j, 1 ), ldc, work( 1, j ), 1 )
+					bi.Dcopy(n, c[j*ldc:], 1, work[j*ldwork:], 1)
 				}
 				// W = W * V1.
 				bi.Dtrmm(blas.Right, blas.Lower, blas.NoTrans, blas.Unit,
@@ -181,7 +179,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 
 			// W = C1.
 			for i := 0; i < k; i++ {
-				bi.Dcopy(m, c[i:], ldc, work[i:], ldwork)
+				//bi.Dcopy(m, c[i:], ldc, work[i:], ldwork)
+				// CALL dcopy( m, c( 1, j ), 1, work( 1, j ), 1 )
+				bi.Dcopy(m, c[i*ldc:], 1, work[i*ldwork:], 1)
 			}
 			// W *= V1.
 			bi.Dtrmm(blas.Right, blas.Lower, blas.NoTrans, blas.Unit, m, k,
@@ -223,7 +223,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 
 			// W = C2ᵀ.
 			for j := 0; j < k; j++ {
-				bi.Dcopy(n, c[(m-k+j)*ldc:], 1, work[j:], ldwork)
+				//bi.Dcopy(n, c[(m-k+j)*ldc:], 1, work[j:], ldwork)
+				// CALL dcopy( n, c( m-k+j, 1 ), ldc, work( 1, j ), 1 )
+				bi.Dcopy(n, c[(m-k+j)*ldc:], ldc, work[j*ldwork:], 1)
 			}
 			// W *= V2.
 			bi.Dtrmm(blas.Right, blas.Upper, blas.NoTrans, blas.Unit, n, k,
@@ -263,7 +265,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 
 		// W = C2.
 		for j := 0; j < k; j++ {
-			bi.Dcopy(m, c[n-k+j:], ldc, work[j:], ldwork)
+			//bi.Dcopy(m, c[n-k+j:], ldc, work[j:], ldwork)
+			// CALL dcopy( m, c( 1, n-k+j ), 1, work( 1, j ), 1 )
+			bi.Dcopy(m, c[(n-k+j)*ldc:], 1, work[j*ldwork:], 1)
 		}
 
 		// W = W * V2.
@@ -308,7 +312,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 
 			// W = C1ᵀ.
 			for j := 0; j < k; j++ {
-				bi.Dcopy(n, c[j*ldc:], 1, work[j:], ldwork)
+				//bi.Dcopy(n, c[j*ldc:], 1, work[j:], ldwork)
+				// CALL dcopy( n, c( j, 1 ), ldc, work( 1, j ), 1 )
+				bi.Dcopy(n, c[j*ldc:], ldc, work[j*ldwork:], 1)
 			}
 			// W *= V1ᵀ.
 			bi.Dtrmm(blas.Right, blas.Upper, blas.Trans, blas.Unit, n, k,
@@ -347,7 +353,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 
 		// W = C1.
 		for j := 0; j < k; j++ {
-			bi.Dcopy(m, c[j:], ldc, work[j:], ldwork)
+			//bi.Dcopy(m, c[j:], ldc, work[j:], ldwork)
+			// CALL dcopy( m, c( 1, j ), 1, work( 1, j ), 1 )
+			bi.Dcopy(m, c[j*ldc:], 1, work[j*ldwork:], 1)
 		}
 		// W *= V1ᵀ.
 		bi.Dtrmm(blas.Right, blas.Upper, blas.Trans, blas.Unit, m, k,
@@ -388,7 +396,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 
 		// W = C2ᵀ.
 		for j := 0; j < k; j++ {
-			bi.Dcopy(n, c[(m-k+j)*ldc:], 1, work[j:], ldwork)
+			//bi.Dcopy(n, c[(m-k+j)*ldc:], 1, work[j:], ldwork)
+			// CALL dcopy( n, c( m-k+j, 1 ), ldc, work( 1, j ), 1 )
+			bi.Dcopy(n, c[(m-k+j):], ldc, work[j*ldwork:], 1)
 		}
 		// W *= V2ᵀ.
 		bi.Dtrmm(blas.Right, blas.Lower, blas.Trans, blas.Unit, n, k,
@@ -426,7 +436,9 @@ func (Implementation) Dlarfb(side blas.Side, trans blas.Transpose, direct lapack
 	// W = C * Vᵀ.
 	// W = C2.
 	for j := 0; j < k; j++ {
-		bi.Dcopy(m, c[n-k+j:], ldc, work[j:], ldwork)
+		//bi.Dcopy(m, c[n-k+j:], ldc, work[j:], ldwork)
+		// CALL dcopy( m, c( 1, n-k+j ), 1, work( 1, j ), 1 )
+		bi.Dcopy(m, c[(n-k+j)*ldc:], 1, work[j*ldwork:], 1)
 	}
 	// W *= V2ᵀ.
 	bi.Dtrmm(blas.Right, blas.Lower, blas.Trans, blas.Unit, m, k,

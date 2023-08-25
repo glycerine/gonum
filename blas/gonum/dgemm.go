@@ -54,15 +54,15 @@ func (Implementation) Dgemm(tA, tB blas.Transpose, m, n, k int, alpha float64, a
 	}
 	bTrans := tB == blas.Trans || tB == blas.ConjTrans
 	if bTrans {
-		if ldb < max(1, k) {
-			panic(badLdB)
-		}
-	} else {
 		if ldb < max(1, n) {
 			panic(badLdB)
 		}
+	} else {
+		if ldb < max(1, k) {
+			panic(badLdB)
+		}
 	}
-	if ldc < max(1, n) {
+	if ldc < max(1, m) {
 		panic(badLdC)
 	}
 

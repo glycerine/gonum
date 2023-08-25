@@ -34,7 +34,7 @@ func (impl Implementation) Dlarf(side blas.Side, m, n int, v []float64, incv int
 		panic(nLT0)
 	case incv == 0:
 		panic(zeroIncV)
-	case ldc < max(1, n):
+	case ldc < max(1, m):
 		panic(badLdC)
 	}
 

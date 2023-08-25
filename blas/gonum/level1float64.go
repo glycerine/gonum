@@ -185,6 +185,10 @@ func (Implementation) Dcopy(n int, x []float64, incX int, y []float64, incY int)
 		panic(shortX)
 	}
 	if (incY > 0 && len(y) <= (n-1)*incY) || (incY < 0 && len(y) <= (1-n)*incY) {
+		print("incY = ", incY, "\n")
+		print("len(y) = ", len(y), "\n")
+		print("n = ", n, "\n")
+		print("(n-1)*incY = ", (n-1)*incY, "\n")
 		panic(shortY)
 	}
 	if incX == 1 && incY == 1 {
