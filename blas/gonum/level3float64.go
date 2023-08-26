@@ -748,7 +748,7 @@ func (Implementation) Dtrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas
 	if lda < max(1, k) {
 		panic(badLdA)
 	}
-	if ldb < max(1, n) {
+	if ldb < max(1, m) {
 		panic(badLdB)
 	}
 
@@ -758,10 +758,10 @@ func (Implementation) Dtrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas
 	}
 
 	// For zero matrix size the following slice length checks are trivially satisfied.
-	if len(a) < lda*(k-1)+k {
+	if len(a) < lda*k {
 		panic(shortA)
 	}
-	if len(b) < ldb*(m-1)+n {
+	if len(b) < ldb*n {
 		panic(shortB)
 	}
 
@@ -867,21 +867,52 @@ func (Implementation) Dtrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas
 				}
 			}
 			return
-		}
-		for i := 0; i < m; i++ {
-			btmp := b[i*ldb : i*ldb+n]
-			for k := 0; k < n; k++ {
-				tmp := alpha * btmp[k]
-				if tmp == 0 {
-					continue
+		} // end A is Upper triangular
+
+		// begin A is Lower triangular
+
+		for j := 0; j < n; j++ {
+			temp := alpha
+			if nonUnit {
+				temp = temp * a[j*lda+j]
+				// scale by alpha this row of B
+				for i := 0; i < m; i++ {
+					b[j*ldb+i] = temp * b[j*ldb+i]
 				}
-				btmp[k] = tmp
-				if nonUnit {
-					btmp[k] *= a[k*lda+k]
+			}
+			for k := j + 1; k < n; k++ {
+				a_kj := a[j*lda+k]
+				if a_kj != 0 {
+					temp = alpha * a_kj
+					for i := 0; i < m; i++ {
+						b[ldb*j+i] += temp * b[ldb*k+i]
+					}
 				}
-				f64.AxpyUnitary(tmp, a[k*lda:k*lda+k], btmp[:k])
 			}
 		}
+
+		/*
+			for i := 0; i < m; i++ { // over rows of B
+				//btmp := b[i*ldb : i*ldb+n] // slice bounds out of range [:27] with capacity 24
+				for k := 0; k < n; k++ { // over cols of B
+					//tmp := alpha * btmp[k]
+					tmp := alpha * b[k]
+					if tmp == 0 {
+						continue
+					}
+					btmp[k] = tmp
+					if nonUnit {
+						btmp[k] *= a[k*lda+k]
+					}
+					// // AxpyUnitary is
+					// func AxpyUnitary(alpha float64, x, y []float64) {
+					//	for i, v := range x {
+					//		y[i] += alpha * v
+					//	}
+					f64.AxpyUnitary(tmp, a[k*lda:(k+1)*lda], btmp[:k])
+				}
+			}
+		*/
 		return
 	}
 	// Cases where a is transposed.
