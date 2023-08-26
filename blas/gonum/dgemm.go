@@ -90,7 +90,7 @@ func (Implementation) Dgemm(tA, tB blas.Transpose, m, n, k int, alpha float64, a
 			panic(shortB)
 		}
 	}
-	if len(c) < (m-1)*ldc+n {
+	if len(c) < ldc*n {
 		panic(shortC)
 	}
 
