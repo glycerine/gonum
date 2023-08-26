@@ -243,7 +243,7 @@ func (Implementation) Dgemv(tA blas.Transpose, m, n int, alpha float64, a []floa
 	if n < 0 {
 		panic(nLT0)
 	}
-	if lda < max(1, n) {
+	if lda < max(1, m) {
 		panic(badLdA)
 	}
 	if incX == 0 {
